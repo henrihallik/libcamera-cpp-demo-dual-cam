@@ -49,8 +49,8 @@ int main() {
             if (!flag)
                 continue;
             Mat im(height, width, CV_8UC3, frameData.imageData, stride);
-
-            imshow("libcamera-demo", im);
+            imwrite("left.jpg", im);
+            //imshow("libcamera-demo", im);
             key = waitKey(1);
             if (key == 'q') {
                 break;
@@ -103,7 +103,8 @@ int main() {
                 continue;
             Mat im(height, width, CV_8UC3, frameData.imageData, stride);
 
-            imshow("libcamera-demo", im);
+            //imshow("libcamera-demo", im);
+                        imwrite("right.jpg", im);
             key = waitKey(1);
             if (key == 'q') {
                 break;
