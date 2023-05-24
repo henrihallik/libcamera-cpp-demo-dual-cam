@@ -26,7 +26,7 @@ int main() {
         cv::resizeWindow("libcamera-demo", window_width, window_height);
     } 
 
-    int ret = cam.initCamera();
+    int ret = cam.initCamera(0);
     cam.configureStill(width, height, formats::RGB888, 1, 0);
     ControlList controls_;
     int64_t frame_time = 1000000 / 10;
@@ -88,7 +88,7 @@ int main() {
     cam.closeCamera();
 
     LibCamera cam2;
-    ret = cam2.initCamera();
+    ret = cam2.initCamera(1);
     cam2.configureStill(width, height, formats::RGB888, 1, 0);
 
     cam2.set(controls_);

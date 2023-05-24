@@ -40,7 +40,7 @@ class LibCamera {
         LibCamera(){};
         ~LibCamera(){};
         
-        int initCamera();
+        int initCamera(int index);
         void configureStill(int width, int height, PixelFormat format, int buffercount, int rotation);
         int startCamera();
         int resetCamera(int width, int height, PixelFormat format, int buffercount, int rotation);
