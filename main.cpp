@@ -2,8 +2,9 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>
-
+#include <unistd.h>
 #include "LibCamera.h"
+#include <string.h>
 
 using namespace cv;
 
@@ -13,8 +14,8 @@ int main() {
     float lens_position = 100;
     float focus_step = 50;
     LibCamera cam;
-    uint32_t width = 9152;
-    uint32_t height = 6944;
+    uint32_t width = 1280;
+    uint32_t height = 720;
     uint32_t stride;
     char key;
     int window_width = 1920;
@@ -22,8 +23,8 @@ int main() {
 
     if (width > window_width)
     {
-        cv::namedWindow("libcamera-demo", cv::WINDOW_NORMAL);
-        cv::resizeWindow("libcamera-demo", window_width, window_height);
+       // cv::namedWindow("libcamera-demo", cv::WINDOW_NORMAL);
+       // cv::resizeWindow("libcamera-demo", window_width, window_height);
     } 
 
     int ret = cam.initCamera(0);
@@ -44,12 +45,14 @@ int main() {
         LibcameraOutData frameData;
         cam.startCamera();
         cam.VideoStream(&width, &height, &stride);
-        while (true) {
+int i = 1;
+int max =5;
+        while (i<=max) {
             flag = cam.readFrame(&frameData);
             if (!flag)
                 continue;
             Mat im(height, width, CV_8UC3, frameData.imageData, stride);
-            imwrite("left.jpg", im);
+            imwrite(std::to_string(i)+".jpg", im);
             //imshow("libcamera-demo", im);
             key = waitKey(1);
             if (key == 'q') {
@@ -79,66 +82,16 @@ int main() {
                 frame_count = 0;
                 start_time = time(0);
             }
+	    printf("move camera now");
+	    sleep(5);
             cam.returnFrameBuffer(frameData);
-            break;
+            i++;
         }
         destroyAllWindows();
         cam.stopCamera();
     }
     cam.closeCamera();
 
-    LibCamera cam2;
-    ret = cam2.initCamera(1);
-    cam2.configureStill(width, height, formats::RGB888, 1, 0);
-
-    cam2.set(controls_);
-    if (!ret) {
-        bool flag;
-        LibcameraOutData frameData;
-        cam2.startCamera();
-        cam2.VideoStream(&width, &height, &stride);
-        while (true) {
-            flag = cam2.readFrame(&frameData);
-            if (!flag)
-                continue;
-            Mat im(height, width, CV_8UC3, frameData.imageData, stride);
-
-            //imshow("libcamera-demo", im);
-                        imwrite("right.jpg", im);
-            key = waitKey(1);
-            if (key == 'q') {
-                break;
-            } else if (key == 'f') {
-                ControlList controls;
-                controls.set(controls::AfMode, controls::AfModeAuto);
-                controls.set(controls::AfTrigger, 0);
-                cam2.set(controls);
-            } else if (key == 'a' || key == 'A') {
-                lens_position += focus_step;
-            } else if (key == 'd' || key == 'D') {
-                lens_position -= focus_step;
-            }
-
-            // To use the manual focus function, libcamera-dev needs to be updated to version 0.0.10 and above.
-            if (key == 'a' || key == 'A' || key == 'd' || key == 'D') {
-                ControlList controls;
-                controls.set(controls::AfMode, controls::AfModeManual);
-                                controls.set(controls::LensPosition, lens_position);
-                cam2.set(controls);
-            }
-
-            frame_count++;
-            if ((time(0) - start_time) >= 1){
-                printf("fps: %d\n", frame_count);
-                frame_count = 0;
-                start_time = time(0);
-            }
-            cam2.returnFrameBuffer(frameData);
-            break;
-        }
-        destroyAllWindows();
-        cam2.stopCamera();
-    }
-    cam2.closeCamera();
+    
     return 0;
 }
