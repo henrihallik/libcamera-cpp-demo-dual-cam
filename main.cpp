@@ -14,8 +14,8 @@ int main() {
     float lens_position = 100;
     float focus_step = 50;
     LibCamera cam;
-    uint32_t width = 1280;
-    uint32_t height = 720;
+    uint32_t width = 4624;
+    uint32_t height = 3472;
     uint32_t stride;
     char key;
     int window_width = 1920;
@@ -45,14 +45,13 @@ int main() {
         LibcameraOutData frameData;
         cam.startCamera();
         cam.VideoStream(&width, &height, &stride);
-int i = 1;
-int max =5;
-        while (i<=max) {
+
+        while (true) {
             flag = cam.readFrame(&frameData);
             if (!flag)
                 continue;
             Mat im(height, width, CV_8UC3, frameData.imageData, stride);
-            imwrite(std::to_string(i)+".jpg", im);
+            imwrite("1.jpg", im);
             //imshow("libcamera-demo", im);
             key = waitKey(1);
             if (key == 'q') {
@@ -82,10 +81,94 @@ int max =5;
                 frame_count = 0;
                 start_time = time(0);
             }
-	    printf("move camera now");
-	    sleep(5);
             cam.returnFrameBuffer(frameData);
-            i++;
+	    break;
+
+
+        }
+
+	cam.resetCamera(1280, 720, formats::RGB888, 1, 0);
+	cam.VideoStream(&width, &height, &stride);
+	while (true) {
+            flag = cam.readFrame(&frameData);
+            if (!flag)
+                continue;
+            Mat im(height, width, CV_8UC3, frameData.imageData, stride);
+            imwrite("2.jpg", im);
+            //imshow("libcamera-demo", im);
+            key = waitKey(1);
+            if (key == 'q') {
+                break;
+            } else if (key == 'f') {
+                ControlList controls;
+                controls.set(controls::AfMode, controls::AfModeAuto);
+                controls.set(controls::AfTrigger, 0);
+                cam.set(controls);
+            } else if (key == 'a' || key == 'A') {
+                lens_position += focus_step;
+            } else if (key == 'd' || key == 'D') {
+                lens_position -= focus_step;
+            }
+
+            // To use the manual focus function, libcamera-dev needs to be updated to version 0.0.10 and above.
+            if (key == 'a' || key == 'A' || key == 'd' || key == 'D') {
+                ControlList controls;
+                controls.set(controls::AfMode, controls::AfModeManual);
+				controls.set(controls::LensPosition, lens_position);
+                cam.set(controls);
+            }
+
+            frame_count++;
+            if ((time(0) - start_time) >= 1){
+                printf("fps: %d\n", frame_count);
+                frame_count = 0;
+                start_time = time(0);
+            }
+            cam.returnFrameBuffer(frameData);
+	    break;
+        }
+        cam.resetCamera(3840, 2160, formats::RGB888, 1, 0);
+    	uint32_t stride2;
+	cam.VideoStream(&width, &height, &stride);
+	while (true) {
+            flag = cam.readFrame(&frameData);
+            if (!flag){
+		printf("readFrame failed for picture 3");
+                continue;
+	    }
+            Mat im(height, width, CV_8UC3, frameData.imageData, stride);
+            imwrite("3.jpg", im);
+            //imshow("libcamera-demo", im);
+            key = waitKey(1);
+            if (key == 'q') {
+                break;
+            } else if (key == 'f') {
+                ControlList controls;
+                controls.set(controls::AfMode, controls::AfModeAuto);
+                controls.set(controls::AfTrigger, 0);
+                cam.set(controls);
+            } else if (key == 'a' || key == 'A') {
+                lens_position += focus_step;
+            } else if (key == 'd' || key == 'D') {
+                lens_position -= focus_step;
+            }
+
+            // To use the manual focus function, libcamera-dev needs to be updated to version 0.0.10 and above.
+            if (key == 'a' || key == 'A' || key == 'd' || key == 'D') {
+                ControlList controls;
+                controls.set(controls::AfMode, controls::AfModeManual);
+				controls.set(controls::LensPosition, lens_position);
+                cam.set(controls);
+            }
+
+            frame_count++;
+            if ((time(0) - start_time) >= 1){
+                printf("fps: %d\n", frame_count);
+                frame_count = 0;
+                start_time = time(0);
+            }
+            cam.returnFrameBuffer(frameData);
+	    break;
         }
         destroyAllWindows();
         cam.stopCamera();
