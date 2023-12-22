@@ -1,43 +1,32 @@
-#include <opencv2/imgproc.hpp>
-#include <opencv2/core.hpp>
-#include <opencv2/imgcodecs.hpp>
-#include <opencv2/highgui.hpp>
 #include <unistd.h>
 #include "LibCamera.h"
 #include <string.h>
 
-using namespace cv;
-
 int main() {
     time_t start_time = time(0);
     int frame_count = 0;
-    float lens_position = 100;
-    float focus_step = 50;
     LibCamera cam;
-    uint32_t width = 4624;
-    uint32_t height = 3472;
+    LibCamera cam2;
+    uint32_t width = 9152;
+    uint32_t height = 6944;
     uint32_t stride;
-    char key;
-    int window_width = 1920;
-    int window_height = 1080;
 
-    if (width > window_width)
-    {
-       // cv::namedWindow("libcamera-demo", cv::WINDOW_NORMAL);
-       // cv::resizeWindow("libcamera-demo", window_width, window_height);
-    } 
+    std::shared_ptr<CameraManager> cm = std::make_unique<CameraManager>();
+    int ret = cm->start();
+    if (ret){
+        std::cout << "Failed to start camera manager: "
+                  << ret << std::endl;
 
-    int ret = cam.initCamera(0);
-    cam.configureStill(width, height, formats::RGB888, 1, 0);
+        return ret;
+    }
+
+    ret = cam.initCamera(0,cm);
+    cam.configureStill(width, height, formats::YUV420, 1, 0);
     ControlList controls_;
     int64_t frame_time = 1000000 / 10;
-    // Set frame rate
-        controls_.set(controls::FrameDurationLimits, libcamera::Span<const int64_t, 2>({ frame_time, frame_time }));
-    // Adjust the brightness of the output images, in the range -1.0 to 1.0
+    controls_.set(controls::FrameDurationLimits, libcamera::Span<const int64_t, 2>({ frame_time, frame_time }));
     controls_.set(controls::Brightness, 0.5);
-    // Adjust the contrast of the output image, where 1.0 = normal contrast
     controls_.set(controls::Contrast, 1.5);
-    // Set the exposure time
     controls_.set(controls::ExposureTime, 20000);
     cam.set(controls_);
     if (!ret) {
@@ -50,30 +39,6 @@ int main() {
             flag = cam.readFrame(&frameData);
             if (!flag)
                 continue;
-            Mat im(height, width, CV_8UC3, frameData.imageData, stride);
-            imwrite("1.jpg", im);
-            //imshow("libcamera-demo", im);
-            key = waitKey(1);
-            if (key == 'q') {
-                break;
-            } else if (key == 'f') {
-                ControlList controls;
-                controls.set(controls::AfMode, controls::AfModeAuto);
-                controls.set(controls::AfTrigger, 0);
-                cam.set(controls);
-            } else if (key == 'a' || key == 'A') {
-                lens_position += focus_step;
-            } else if (key == 'd' || key == 'D') {
-                lens_position -= focus_step;
-            }
-
-            // To use the manual focus function, libcamera-dev needs to be updated to version 0.0.10 and above.
-            if (key == 'a' || key == 'A' || key == 'd' || key == 'D') {
-                ControlList controls;
-                controls.set(controls::AfMode, controls::AfModeManual);
-				controls.set(controls::LensPosition, lens_position);
-                cam.set(controls);
-            }
 
             frame_count++;
             if ((time(0) - start_time) >= 1){
@@ -82,41 +47,33 @@ int main() {
                 start_time = time(0);
             }
             cam.returnFrameBuffer(frameData);
-	    break;
-
-
+            break;
         }
+    }
 
-	cam.resetCamera(1280, 720, formats::RGB888, 1, 0);
-	cam.VideoStream(&width, &height, &stride);
-	while (true) {
-            flag = cam.readFrame(&frameData);
+    //cam.stopCamera();
+    //cam.closeCamera();
+
+    int ret2 = cam2.initCamera(1,cm);
+    cam2.configureStill(width, height, formats::YUV420, 1, 0);
+    ControlList controls2_;
+    frame_time = 1000000 / 10;
+    controls2_.set(controls::FrameDurationLimits, libcamera::Span<const int64_t, 2>({ frame_time, frame_time }));
+    controls2_.set(controls::Brightness, 0.5);
+    controls2_.set(controls::Contrast, 1.5);
+    controls2_.set(controls::ExposureTime, 20000);
+    cam2.set(controls2_);
+    if (!ret2) {
+        bool flag;
+        LibcameraOutData frameData;
+
+        cam2.startCamera();
+        cam2.VideoStream(&width, &height, &stride);
+
+        while (true) {
+            flag = cam2.readFrame(&frameData);
             if (!flag)
                 continue;
-            Mat im(height, width, CV_8UC3, frameData.imageData, stride);
-            imwrite("2.jpg", im);
-            //imshow("libcamera-demo", im);
-            key = waitKey(1);
-            if (key == 'q') {
-                break;
-            } else if (key == 'f') {
-                ControlList controls;
-                controls.set(controls::AfMode, controls::AfModeAuto);
-                controls.set(controls::AfTrigger, 0);
-                cam.set(controls);
-            } else if (key == 'a' || key == 'A') {
-                lens_position += focus_step;
-            } else if (key == 'd' || key == 'D') {
-                lens_position -= focus_step;
-            }
-
-            // To use the manual focus function, libcamera-dev needs to be updated to version 0.0.10 and above.
-            if (key == 'a' || key == 'A' || key == 'd' || key == 'D') {
-                ControlList controls;
-                controls.set(controls::AfMode, controls::AfModeManual);
-				controls.set(controls::LensPosition, lens_position);
-                cam.set(controls);
-            }
 
             frame_count++;
             if ((time(0) - start_time) >= 1){
@@ -124,57 +81,12 @@ int main() {
                 frame_count = 0;
                 start_time = time(0);
             }
-            cam.returnFrameBuffer(frameData);
-	    break;
+            cam2.returnFrameBuffer(frameData);
+            break;
         }
-        cam.resetCamera(3840, 2160, formats::RGB888, 1, 0);
-    	uint32_t stride2;
-	cam.VideoStream(&width, &height, &stride);
-	while (true) {
-            flag = cam.readFrame(&frameData);
-            if (!flag){
-		printf("readFrame failed for picture 3");
-                continue;
-	    }
-            Mat im(height, width, CV_8UC3, frameData.imageData, stride);
-            imwrite("3.jpg", im);
-            //imshow("libcamera-demo", im);
-            key = waitKey(1);
-            if (key == 'q') {
-                break;
-            } else if (key == 'f') {
-                ControlList controls;
-                controls.set(controls::AfMode, controls::AfModeAuto);
-                controls.set(controls::AfTrigger, 0);
-                cam.set(controls);
-            } else if (key == 'a' || key == 'A') {
-                lens_position += focus_step;
-            } else if (key == 'd' || key == 'D') {
-                lens_position -= focus_step;
-            }
-
-            // To use the manual focus function, libcamera-dev needs to be updated to version 0.0.10 and above.
-            if (key == 'a' || key == 'A' || key == 'd' || key == 'D') {
-                ControlList controls;
-                controls.set(controls::AfMode, controls::AfModeManual);
-				controls.set(controls::LensPosition, lens_position);
-                cam.set(controls);
-            }
-
-            frame_count++;
-            if ((time(0) - start_time) >= 1){
-                printf("fps: %d\n", frame_count);
-                frame_count = 0;
-                start_time = time(0);
-            }
-            cam.returnFrameBuffer(frameData);
-	    break;
-        }
-        destroyAllWindows();
-        cam.stopCamera();
     }
-    cam.closeCamera();
 
-    
+    cam2.stopCamera();
+    cam2.closeCamera();
     return 0;
 }

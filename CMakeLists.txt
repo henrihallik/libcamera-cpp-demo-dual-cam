@@ -12,14 +12,10 @@ message(STATUS ${CAMERA_INCLUDE_DIRS})
 message(STATUS ${LIBCAMERA_LIBRARY})
 message(STATUS ${LIBCAMERA_BASE_LIBRARY})
 
-find_package(OpenCV REQUIRED)
-if (OpenCV_FOUND)
-	message("Found OpenCV")
-	message("Includes:" ${OpenCV_INCLUDE_DIRS})
-endif(OpenCV_FOUND)
+
 
 include_directories(. "${CAMERA_INCLUDE_DIRS}")
 set(LIBCAMERA_LIBRARIES "${LIBCAMERA_LIBRARY}" "${LIBCAMERA_BASE_LIBRARY}")
 add_executable(libcamera-demo main.cpp LibCamera.cpp)
 
-target_link_libraries(libcamera-demo "${LIBCAMERA_LIBRARIES}" ${OpenCV_LIBS})
+target_link_libraries(libcamera-demo "${LIBCAMERA_LIBRARIES}")

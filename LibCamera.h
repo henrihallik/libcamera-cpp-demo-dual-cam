@@ -40,7 +40,7 @@ class LibCamera {
         LibCamera(){};
         ~LibCamera(){};
         
-        int initCamera(int index);
+        int initCamera(int index, std::shared_ptr<CameraManager> cm);
         void configureStill(int width, int height, PixelFormat format, int buffercount, int rotation);
         int startCamera();
         int resetCamera(int width, int height, PixelFormat format, int buffercount, int rotation);
@@ -64,7 +64,7 @@ class LibCamera {
 
         unsigned int cameraIndex_;
 	    uint64_t last_;
-        std::unique_ptr<CameraManager> cm;
+        std::shared_ptr<CameraManager> cm;
         std::shared_ptr<Camera> camera_;
         bool camera_acquired_ = false;
         bool camera_started_ = false;

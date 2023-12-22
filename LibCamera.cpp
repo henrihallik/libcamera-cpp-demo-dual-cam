@@ -2,28 +2,26 @@
 
 using namespace std::placeholders;
 
-int LibCamera::initCamera(int index) {
+int LibCamera::initCamera(int index, std::shared_ptr<CameraManager> manager) {
     int ret;
-    cm = std::make_unique<CameraManager>();
-    ret = cm->start();
-    if (ret){
-        std::cout << "Failed to start camera manager: "
-              << ret << std::endl;
-        return ret;
-    }
+    cm = manager;
     cameraId = cm->cameras()[index]->id();
     camera_ = cm->get(cameraId);
     if (!camera_) {
         std::cerr << "Camera " << cameraId << " not found" << std::endl;
+        printf("Camera %s not found \n", cameraId.c_str());
         return 1;
     }
 
     if (camera_->acquire()) {
+         printf("Failed to acquire camera %s\n", cameraId.c_str());
         std::cerr << "Failed to acquire camera " << cameraId
               << std::endl;
         return 1;
     }
+
     camera_acquired_ = true;
+    printf("initalized camera %d %s\n", index, cameraId.c_str());
     return 0;
 }
 
@@ -32,7 +30,7 @@ char * LibCamera::getCameraId(){
 }
 
 void LibCamera::configureStill(int width, int height, PixelFormat format, int buffercount, int rotation) {
-    printf("Configuring still capture...\n");
+    printf("xConfiguring still capture...%s\n",cameraId.c_str());
     config_ = camera_->generateConfiguration({ StreamRole::StillCapture });
     if (width && height) {
         libcamera::Size size(width, height);
@@ -49,7 +47,7 @@ void LibCamera::configureStill(int width, int height, PixelFormat format, int bu
     transform = rot * transform;
     if (!!(transform & Transform::Transpose))
         throw std::runtime_error("transforms requiring transpose not supported");
-    config_->transform = transform;
+    //config_->transform = transform;
 
     CameraConfiguration::Status validation = config_->validate();
 	if (validation == CameraConfiguration::Invalid)
