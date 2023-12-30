@@ -21,7 +21,7 @@ int main() {
     }
 
     ret = cam.initCamera(0,cm);
-    cam.configureStill(width, height, formats::YUV420, 1, 0);
+    cam.configureStill(width, height, formats::BGR888, 1, 0);
     ControlList controls_;
     int64_t frame_time = 1000000 / 10;
     controls_.set(controls::FrameDurationLimits, libcamera::Span<const int64_t, 2>({ frame_time, frame_time }));
@@ -53,7 +53,7 @@ int main() {
 
     //cam.stopCamera();
     //cam.closeCamera();
-
+return 0; //EXIT HERE FOR THE EXAMPLE
     int ret2 = cam2.initCamera(1,cm);
     cam2.configureStill(width, height, formats::YUV420, 1, 0);
     ControlList controls2_;
